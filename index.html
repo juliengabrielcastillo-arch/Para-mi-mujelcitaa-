@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Galaxia Amor 💖</title>
+<style>
+body { margin:0; overflow:hidden; background:black; }
+canvas { display:block; }
+button {
+ position:fixed; bottom:20px; left:20px;
+ background:#ff4da6; color:white;
+ border:none; padding:10px 15px;
+ border-radius:10px; cursor:pointer;
+ font-size:16px;
+}
+</style>
+</head>
+<body>
+
+<button onclick="musica()">🎵 Música</button>
+<canvas id="c"></canvas>
+
+<audio id="music" loop>
+  <source src="TU_MUSICA.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let scale = 1;
+let offsetX = 0, offsetY = 0;
+let dragging = false;
+let startX, startY;
+
+let time = 0;
+
+const frases = [
+"Te amo💕","Eres mi todo💖","Mi luz🤍","Mi princesita 🌹",
+"Mi niña hermosa 🤍","Mi mujer 💗","Mi enanita ❤️",
+"Mi esposita ✨","Mi vida entera 💫",
+"Feliz 3 meses 🎉","La mujer más guapa 🤍","Mi ojitos lindos 🤩"
+];
+
+// MENOS elementos para rendimiento
+let textos = [];
+function generarTextos(){
+ textos = [];
+ for(let i=0;i<180;i++){
+  textos.push({
+    x: Math.random()*3000-1500,
+    y: Math.random()*3000-1500,
+    z: Math.random()*700,
+    text: frases[Math.floor(Math.random()*frases.length)],
+    size: 12 + Math.random()*6
+  });
+ }
+}
+generarTextos();
+
+// MÁS estrellas pero ligeras
+let estrellas = [];
+for(let i=0;i<180;i++){
+ estrellas.push({
+   x: Math.random()*canvas.width,
+   y: Math.random()*canvas.height,
+   size: Math.random()*1.5
+ });
+}
+
+// explosión
+let particulas = [];
+
+function explosion(x,y){
+ for(let i=0;i<60;i++){
+  particulas.push({
+    x:x,
+    y:y,
+    vx:(Math.random()-0.5)*6,
+    vy:(Math.random()-0.5)*6,
+    life:60
+  });
+ }
+}
+
+function draw(){
+ time += 0.008;
+
+ ctx.setTransform(1,0,0,1,0,0);
+ ctx.fillStyle="black";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ // estrellas
+ ctx.fillStyle="white";
+ estrellas.forEach(e=>{
+   ctx.fillRect(e.x, e.y, e.size, e.size);
+ });
+
+ ctx.translate(canvas.width/2 + offsetX, canvas.height/2 + offsetY);
+ ctx.scale(scale, scale);
+
+ ctx.rotate(time * 0.04);
+
+ // agujero negro MÁS SUAVE (menos naranja)
+ let grad = ctx.createRadialGradient(0,0,30,0,0,400);
+ grad.addColorStop(0,"#ff4da6");
+ grad.addColorStop(0.3,"#660033");
+ grad.addColorStop(1,"black");
+ ctx.fillStyle=grad;
+ ctx.beginPath();
+ ctx.arc(0,0,400,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="black";
+ ctx.beginPath();
+ ctx.arc(0,0,90,0,Math.PI*2);
+ ctx.fill();
+
+ // NOMBRE CENTRO
+ ctx.save();
+ ctx.rotate(-time * 0.3);
+ ctx.fillStyle="#ff4da6";
+ ctx.font="40px Arial";
+ ctx.textAlign="center";
+ ctx.fillText("Ludmila 💖",0,0);
+ ctx.restore();
+
+ // textos
+ textos.forEach(t=>{
+   t.z -= 1.2;
+   if(t.z < 1){
+     t.z = 700;
+     t.x = Math.random()*3000-1500;
+     t.y = Math.random()*3000-1500;
+   }
+
+   let depth = 1 + t.z/700;
+   let x = t.x/depth;
+   let y = t.y/depth;
+
+   ctx.fillStyle="white";
+   ctx.font=(t.size/depth)+"px Arial";
+   ctx.fillText(t.text, x, y);
+ });
+
+ // partículas (explosión)
+ particulas.forEach(p=>{
+   p.x += p.vx;
+   p.y += p.vy;
+   p.life--;
+
+   ctx.fillStyle="#ff4da6";
+   ctx.fillRect(p.x, p.y, 2, 2);
+ });
+
+ particulas = particulas.filter(p=>p.life>0);
+
+ requestAnimationFrame(draw);
+}
+draw();
+
+// CLICK EXPLOSION
+canvas.addEventListener("click", e=>{
+ explosion(e.clientX - canvas.width/2 - offsetX,
+           e.clientY - canvas.height/2 - offsetY);
+});
+
+// DRAG
+canvas.addEventListener("mousedown",e=>{
+ dragging=true;
+ startX=e.clientX-offsetX;
+ startY=e.clientY-offsetY;
+});
+canvas.addEventListener("mousemove",e=>{
+ if(dragging){
+   offsetX=e.clientX-startX;
+   offsetY=e.clientY-startY;
+ }
+});
+canvas.addEventListener("mouseup",()=>dragging=false);
+
+// ZOOM
+canvas.addEventListener("wheel",e=>{
+ scale += e.deltaY * -0.001;
+ scale = Math.min(Math.max(.4, scale), 3);
+});
+
+// MUSICA
+function musica(){
+ let m = document.getElementById("music");
+ if(m.paused){
+   m.play();
+ } else {
+   m.pause();
+ }
+}
+</script>
+
+</body>
+</html>
